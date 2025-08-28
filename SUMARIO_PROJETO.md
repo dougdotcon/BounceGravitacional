@@ -7,7 +7,7 @@
 ## 📁 Estrutura Final Organizada
 
 ```
-fisica-bigbang/
+bounce-gravitacional/
 │
 ├── 📄 README.md                           # Documentação principal do projeto
 ├── 📄 SUMARIO_PROJETO.md                  # Este arquivo - visão geral

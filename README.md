@@ -15,7 +15,7 @@ Este projeto desenvolve uma **nova hipótese teórica revolucionária** para o b
 ## 🏗️ Estrutura do Projeto
 
 ```
-fisica-bigbang/
+bounce-gravitacional/
 ├── README.md                    # Este arquivo
 ├── doc.md                       # Análise do artigo original
 ├── resume.md                    # Resumo técnico do modelo original  

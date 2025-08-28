@@ -211,7 +211,7 @@ Este trabalho representa um avanço significativo na compreensão da cosmologia 
 
 ```python
 # Implementação completa disponível em:
-# https://github.com/dougdotcon/fisica-bigbang
+# https://github.com/dougdotcon/bounce-gravitacional
 # Arquivo: simulacoes/simulacao_campo_escalar_bounce.py
 ```
 
