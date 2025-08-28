@@ -1,8 +1,8 @@
 # Nova Hipótese de Bounce Gravitacional: Campo Escalar Não-Mínimo
 
 ## Autores
-- Douglas [Sobrenome]
-- Universidade Federal [Instituição]
+- Douglas 
+- Universidade Federal 
 - Data: 28 de agosto de 2025
 
 ## Resumo
@@ -230,4 +230,4 @@ Todos os dados das simulações estão disponíveis em formato JSON na pasta `re
 
 **Disponibilidade de Dados**: Todos os códigos e dados estão disponíveis publicamente no repositório GitHub associado.
 
-**Correspondência**: douglas@[email].com
+**Correspondência**: dougdotcon@gmail.com
