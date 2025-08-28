@@ -702,8 +702,8 @@ Para discussões técnicas sobre a nova hipótese ou colaborações, consulte a 
 
 📧 **Email**: dougdotcon@gmail.com  
 📱 **GitHub**: [github.com/dougdotcon](https://github.com/dougdotcon)  
-📚 **LinkedIn**: [linkedin.com/in/douglas](https://linkedin.com/in/douglas)  
-🌐 **Website**: [douglas.dev](https://douglas.dev)
+📚 **LinkedIn**: [linkedin.com/in/dougdotcon](https://linkedin.com/in/dougdotcon)  
+🌐 **Website**: [asimovtech.systems](https://asimovtech.systems/)
 
 </div>
 
