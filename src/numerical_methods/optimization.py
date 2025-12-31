@@ -525,8 +525,7 @@ if __name__ == "__main__":
     )
 
     if resultado['sucesso']:
-        print("
-Ajuste bem-sucedido:")
+        print("Ajuste bem-sucedido:")
         print(f"Amplitude: {resultado['parametros_otimos'][0]:.3f} ± {resultado['erros_parametros'][0]:.3f}")
         print(f"Frequência ω: {resultado['parametros_otimos'][1]:.3f} ± {resultado['erros_parametros'][1]:.3f}")
         print(f"Fase φ: {resultado['parametros_otimos'][2]:.3f} ± {resultado['erros_parametros'][2]:.3f}")
@@ -540,8 +539,7 @@ Ajuste bem-sucedido:")
         x, y = params
         return (1 - x)**2 + 100 * (y - x**2)**2
 
-    print("
-Benchmark de otimizadores na função de Rosenbrock:")
+    print("Benchmark de otimizadores na função de Rosenbrock:")
     resultados_benchmark = benchmark_otimizadores(
         funcao_teste, [0.0, 0.0], bounds=[(-2, 2), (-2, 2)]
     )

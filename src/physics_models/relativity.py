@@ -501,10 +501,11 @@ class OndasGravitacionais:
 
 class CamposEscalarAcoplados:
     """
-    Campos escalares acoplados à curvatura (hipótese nova)
+    Campos escalares acoplados à curvatura com Reheating (Fase 4).
+    Simula inflação e decaimento em radiação.
     """
 
-    def __init__(self, xi: float = 1e6, alpha: float = -1e-4):
+    def __init__(self, xi: float = 1e6, alpha: float = -1e-4, gamma: float = 1e-3):
         """
         Parameters:
         -----------
@@ -512,136 +513,136 @@ class CamposEscalarAcoplados:
             Acoplamento não-mínimo
         alpha : float
             Parâmetro de estabilização
+        gamma : float
+            Taxa de decaimento do inflaton (Reheating)
         """
         self.xi = xi
         self.alpha = alpha
+        self.gamma = gamma # Decay friction coefficient
         self.cosmo = CosmologiaRelatividade()
-
-    def equacao_campo_escalar(self, phi: float, R: float, dot_phi: float = 0) -> float:
-        """
-        Equação do campo escalar acoplado
-
-        Parameters:
-        -----------
-        phi : float
-            Valor do campo
-        R : float
-            Curvatura escalar
-        dot_phi : float
-            Derivada temporal (para dinâmica completa)
-
-        Returns:
-        --------
-        float: d²φ/dt² (equação de movimento)
-        """
-        # Potencial V(φ) = 1/2 m² φ² (simplificado)
-        m_phi = 1e-6  # Massa pequena
-        V_phi = 0.5 * m_phi**2 * phi**2
-
-        # Derivada do potencial
-        dV_dphi = m_phi**2 * phi
-
-        # Acoplamento não-mínimo
-        f_phi = 1 + self.xi * phi**2 + self.alpha * phi**4
-
-        # Equação: □φ - V'(φ) + ξ R φ + α (R φ³ + φ² □φ) = 0
-        # Aproximação simplificada
-        equacao = dV_dphi - self.xi * R * phi
-
-        return equacao
 
     def constante_gravitacional_efetiva(self, phi: float) -> float:
         """
         Constante gravitacional efetiva G_eff = G / f(φ)
-
-        Parameters:
-        -----------
-        phi : float
-            Valor do campo
-
-        Returns:
-        --------
-        float: G_eff / G
         """
         f_phi = 1 + self.xi * phi**2 + self.alpha * phi**4
         return 1.0 / f_phi
 
     def evolucao_campo_bounce(self, t_span: Tuple[float, float] = (-100, 100),
-                             n_pontos: int = 1000) -> Dict[str, np.ndarray]:
+                             n_pontos: int = 1000,
+                             initial_conditions: Optional[Dict[str, float]] = None) -> Dict[str, np.ndarray]:
         """
-        Evolução do campo escalar durante o bounce
-
-        Returns:
-        --------
-        dict: Evolução temporal
+        Evolução do campo escalar durante inflação e reheating.
+        Resolve o sistema acoplado Gravidade-Campo-Radiação.
+        
+        y = [a, H, phi, pi_phi, rho_r]
         """
-        def sistema_bounce(t, y):
-            """
-            Sistema de equações para campo escalar + Friedmann
-            y = [a, rho_m, phi, pi_phi]
-            """
-            a, rho_m, phi, pi_phi = y
+        def sistema_reheating(t, y):
+            # Usar v_phi (dot_phi) em vez de pi_phi para evitar overflow a^3
+            # y = [a, H, phi, v_phi, rho_r]
+            a, H, phi, v_phi, rho_r = y
 
-            # Evitar singularidade
-            if a <= 1e-10:
-                return np.zeros(4)
-
-            # Constante gravitacional efetiva
-            G_eff = self.constante_gravitacional_efetiva(phi)
+            # Evitar singularidade numérica
+            if a < 1e-60: a = 1e-60
+            
             G = 1.0  # Unidades naturais
-
-            # Velocidade do campo
-            dot_phi = pi_phi / a**3
-
-            # Densidade do campo
-            rho_phi = 0.5 * dot_phi**2 + 0.5 * phi**2  # Potencial simplificado
-
-            # Curvatura (aproximação)
-            R = 6 * (dot_a/a)**2 if 'dot_a' in locals() else 0
-
-            # Equações de Friedmann modificadas
-            rho_total = rho_m + rho_phi
-            H_squared = (8 * np.pi * G_eff / 3) * rho_total
-            H = np.sqrt(max(H_squared, 0))
-
-            # Evolução
+            m_phi = 1e-6 # Massa do inflaton
+            gamma = self.gamma
+            
+            # 1. Campo Escalar
+            dot_phi = v_phi
+            
+            # Potencial
+            V = 0.5 * m_phi**2 * phi**2
+            dV_dphi = m_phi**2 * phi
+            
+            # Equação de Movimento para v_phi (ddot_phi)
+            # ddot_phi + (3H + Gamma) dot_phi + V' + ... = 0
+            # Aproximação perto do mínimo (phi~0): termos de Xi são desprezíveis
+            # Equação completa seria complexa com Xi, mas no final da inflação o acoplamento
+            # R*phi é pequeno se R -> 0.
+            # Vamos usar a forma canônica amortecida:
+            term_friction = (3 * H + gamma) * v_phi
+            dot_v_phi = -term_friction - dV_dphi
+            
+            # 2. Energias
+            rho_phi = 0.5 * v_phi**2 + V
+            p_phi = 0.5 * v_phi**2 - V
+            
+            # 3. Radiação
+            # dot_rho_r + 4H rho_r = Gamma * dot_phi^2
+            dot_rho_r = gamma * v_phi**2 - 4 * H * rho_r
+            if rho_r < 0: rho_r = 0
+            
+            # 4. Gravidade (G_eff)
+            # No reaquecimento, phi é pequeno, F ~ 1.
+            xi = self.xi
+            F = 1 + xi * phi**2 + self.alpha * phi**4
+            G_eff = G / F
+            
+            rho_tot = rho_phi + rho_r
+            p_tot = p_phi + (rho_r / 3.0)
+            
+            # dH/dt = -4pi G_eff (rho + p)
+            dot_H = -4 * np.pi * G_eff * (rho_tot + p_tot)
+            
+            # 5. Geometria
             dot_a = a * H
-            dot_rho_m = -3 * H * rho_m
-            dot_phi_calc = pi_phi / a**3
+            
+            return np.array([dot_a, dot_H, dot_phi, dot_v_phi, dot_rho_r])
 
-            # Equação do campo escalar
-            ddot_phi = self.equacao_campo_escalar(phi, R, dot_phi)
-            dot_pi_phi = -3 * H * pi_phi + a**3 * ddot_phi
-
-            return np.array([dot_a, dot_rho_m, dot_phi_calc, dot_pi_phi])
-
-        # Condições iniciais
-        a0 = 1000.0
-        rho_m0 = 1e-5
-        phi0 = 1e-3
-        pi_phi0 = 0.0
-        y0 = np.array([a0, rho_m0, phi0, pi_phi0])
-
+        # Configurar Condições Iniciais
+        if initial_conditions is None:
+            initial_conditions = {}
+            
+        a0 = initial_conditions.get('a_inicial', 1.0)
+        phi0 = initial_conditions.get('phi_inicial', 1.0)
+        pi_phi0 = initial_conditions.get('pi_phi_inicial', 0.0)
+        H0 = initial_conditions.get('H_inicial', 0.1)
+        rho_r0 = initial_conditions.get('rho_r_inicial', 0.0)
+        
+        # Initial velocity v_phi (dot_phi)
+        v_phi0 = pi_phi0 / (a0**3) if a0 > 1e-60 else 0.0
+        
+        y0 = np.array([a0, H0, phi0, v_phi0, rho_r0])
+        
         # Integração
-        integrator = IntegratorNumerico()
-        sol = integrator.integrar_sistema(sistema_bounce, y0, t_span)
+        # Usar LSODA para lidar com a rigidez durante o reaquecimento (oscilações rápidas)
+        integrator = IntegratorNumerico(rtol=1e-5, atol=1e-7)
+        sol = integrator.integrar_sistema(sistema_reheating, y0, t_span, metodo='LSODA')
 
         if not sol['sucesso']:
             warnings.warn(f"Integração falhou: {sol['mensagem']}")
-            return {'sucesso': False}
-
-        # Avaliar solução
+            return {'sucesso': False, 'mensagem': sol['mensagem']}
+        
+        # Processar Resultados
         t_eval = np.linspace(t_span[0], t_span[1], n_pontos)
-        y_eval = np.array([sol['solucao'].sol(t) for t in t_eval])
+        try:
+             sol_func = sol['solucao'].sol
+             y_eval = np.array([sol_func(t) for t in t_eval])
+        except Exception as e:
+             return {'sucesso': False, 'mensagem': f"Erro na avaliação: {e}"}
 
+        # Extrair componentes
+        a_res = y_eval[:, 0]
+        phi_res = y_eval[:, 2]
+        v_phi_res = y_eval[:, 3] 
+        rho_r_res = y_eval[:, 4]
+        
+        # Recalcular densidade do campo
+        m_phi = 1e-6
+        rho_phi_res = 0.5 * v_phi_res**2 + 0.5 * m_phi**2 * phi_res**2
+        
         return {
+            'sucesso': True,
             't': t_eval,
-            'a': y_eval[:, 0],
-            'rho_m': y_eval[:, 1],
-            'phi': y_eval[:, 2],
-            'pi_phi': y_eval[:, 3],
-            'G_eff': np.array([self.constante_gravitacional_efetiva(phi) for phi in y_eval[:, 2]]),
-            'sucesso': True
+            'a': a_res,
+            'H': y_eval[:, 1],
+            'phi': phi_res,
+            'v_phi': v_phi_res,
+            'rho_r': rho_r_res,
+            'rho_phi': rho_phi_res,
+            'G_eff': np.array([self.constante_gravitacional_efetiva(phi) for phi in phi_res])
         }
 
 

@@ -20,7 +20,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
+ajuste-fino
 # Ambiente virtual
 venv/
 env/
