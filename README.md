@@ -466,4 +466,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **Project Status**: Research prototype validated through Phase 3. Phase 4 (Reheating) requires GPU resources for full ξ=100 simulation.
 
-**Last Updated**: 2024-12-31
+**Last Updated**: 2025-12-31
